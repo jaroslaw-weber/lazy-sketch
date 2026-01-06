@@ -156,7 +156,7 @@ export default class LazySketchPlugin extends Plugin {
       console.log("=== REQUEST START ===");
       console.log("URL: https://api.replicate.com/v1/predictions");
       console.log("Request body:", JSON.stringify(requestBody, null, 2));
-      console.log("Token:", this.settings.replicateApiToken.substring(0, 10) + "...");
+      console.log("Token:", JSON.stringify(this.settings.replicateApiToken));
 
       const response = await requestUrl({
         url: "https://api.replicate.com/v1/predictions",
