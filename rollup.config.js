@@ -1,0 +1,29 @@
+import typescript from "@rollup/plugin-typescript";
+import { nodeResolve } from "@rollup/plugin-node-resolve";
+import commonjs from "@rollup/plugin-commonjs";
+import copy from "rollup-plugin-copy";
+
+const isProduction = process.env.BUILD === "production";
+
+export default {
+  input: "src/main.ts",
+  output: {
+    dir: isProduction ? "." : ".",
+    sourcemap: isProduction ? false : "inline",
+    sourcemapExcludeSources: isProduction,
+    format: "cjs",
+    exports: "default",
+  },
+  external: ["obsidian", "electron", "@codemirror/autocomplete", "@codemirror/closebrackets", "@codemirror/collab", "@codemirror/commands", "@codemirror/comment", "@codemirror/fold", "@codemirror/gutter", "@codemirror/highlight", "@codemirror/history", "@codemirror/language", "@codemirror/lint", "@codemirror/matchbrackets", "@codemirror/panel", "@codemirror/rangeset", "@codemirror/rectangular-selection", "@codemirror/search", "@codemirror/state", "@codemirror/stream-parser", "@codemirror/text", "@codemirror/tooltip", "@codemirror/view"],
+  plugins: [
+    typescript(),
+    nodeResolve({ browser: true }),
+    commonjs(),
+    copy({
+      targets: [
+        { src: "manifest.json", dest: "." },
+        { src: "styles.css", dest: "." }
+      ]
+    })
+  ]
+};

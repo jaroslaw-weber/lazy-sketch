@@ -1,0 +1,10 @@
+{
+  "id": "obsidian-lazy-sketch",
+  "name": "Lazy Sketch",
+  "version": "1.0.0",
+  "minAppVersion": "0.15.0",
+  "description": "Generate AI sketches directly in your notes using Replicate API",
+  "author": "Jaroslaw Weber",
+  "authorUrl": "https://github.com/jaroslaw-weber",
+  "isDesktopOnly": false
+}
