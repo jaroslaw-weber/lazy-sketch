@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, Notice, MarkdownView } from "obsidian";
+import { App, Plugin, PluginSettingTab, Setting, Notice, MarkdownView, requestUrl } from "obsidian";
 
 interface PromptPattern {
   name: string;
@@ -15,7 +15,7 @@ interface LazySketchSettings {
 
 const DEFAULT_SETTINGS: LazySketchSettings = {
   replicateApiToken: "",
-  defaultModel: "prunaai/z-image-turbo-lora",
+  defaultModel: "prunaai/z-image-turbo-lora:197b2db2015aa366d2bc61a941758adf4c31ac66b18573f5c66dc388ab081ca2",
   loraWeights: "https://huggingface.co/Ttio2/Z-Image-Turbo-pencil-sketch/resolve/main/Zimage_pencil_sketch.safetensors",
   selectedPattern: "cute",
   promptPatterns: [
@@ -83,8 +83,9 @@ export default class LazySketchPlugin extends Plugin {
       
       new Notice("Sketch generated successfully!");
     } catch (error) {
-      console.error("Error generating sketch:", error);
-      new Notice("Failed to generate sketch. Check console for details.");
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      console.error("Full error:", error);
+      new Notice(`Error: ${errorMessage}\nCheck console (Ctrl+Shift+I) for details`);
     }
   }
 
@@ -119,6 +120,13 @@ export default class LazySketchPlugin extends Plugin {
       document.body.appendChild(modal);
       
       input.focus();
+      
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          resolve(input.value || null);
+          modal.remove();
+        }
+      });
     });
   }
 
@@ -129,51 +137,61 @@ export default class LazySketchPlugin extends Plugin {
     
     const formattedPrompt = selectedPattern.pattern.replace("{prompt}", userPrompt);
     
-    const response = await fetch("https://api.replicate.com/v1/predictions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Token ${this.settings.replicateApiToken}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
+    try {
+      const requestBody = {
         input: {
           prompt: formattedPrompt,
           lora_weights: [this.settings.loraWeights],
-          lora_scales: [1],
-          num_inference_steps: 4,
-          width: 1024,
-          height: 1024
+          lora_scales: [1]
         }
-      })
-    });
-
-    const prediction = await response.json();
-    
-    console.log("Replicate API response:", prediction);
-    
-    if (prediction.error) {
-      throw new Error(prediction.error);
-    }
-
-    while (prediction.status !== "succeeded" && prediction.status !== "failed") {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      };
       
-      const statusResponse = await fetch(prediction.urls.get, {
+      console.log("Request body:", JSON.stringify(requestBody, null, 2));
+      
+      const response = await requestUrl({
+        url: "https://api.replicate.com/v1/predictions",
+        method: "POST",
         headers: {
-          "Authorization": `Token ${this.settings.replicateApiToken}`
-        }
+          "Authorization": `Token ${this.settings.replicateApiToken}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(requestBody)
       });
+
+      const prediction = response.json;
+      console.log("Replicate API response:", prediction);
       
-      Object.assign(prediction, await statusResponse.json());
-      console.log("Polling status:", prediction.status);
-    }
+      if (prediction.error) {
+        throw new Error(prediction.error);
+      }
 
-    if (prediction.status === "failed") {
-      throw new Error(prediction.error || "Generation failed");
-    }
+      while (prediction.status !== "succeeded" && prediction.status !== "failed") {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const statusResponse = await requestUrl({
+          url: prediction.urls.get,
+          method: "GET",
+          headers: {
+            "Authorization": `Token ${this.settings.replicateApiToken}`
+          }
+        });
+        
+        Object.assign(prediction, statusResponse.json);
+        console.log("Polling status:", prediction.status);
+      }
 
-    console.log("Generated image:", prediction.output[0]);
-    return prediction.output[0];
+      if (prediction.status === "failed") {
+        throw new Error(prediction.error || "Generation failed");
+      }
+
+      console.log("Generated image:", prediction.output[0]);
+      return prediction.output[0];
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Failed to connect to Replicate API");
+    }
   }
 
   async loadSettings() {
@@ -226,10 +244,10 @@ class LazySketchSettingTab extends PluginSettingTab {
         }));
 
     new Setting(containerEl)
-      .setName("LoRA Weights")
-      .setDesc("Enter the LoRA weights to use for the pencil sketch style")
+      .setName("LoRA Weights URL")
+      .setDesc("Enter the huggingface URL for the LoRA weights")
       .addText(text => text
-        .setPlaceholder("Ttio2/Z-Image-Turbo-pencil-sketch:Zimage_pencil_sketch")
+        .setPlaceholder("https://huggingface.co/...")
         .setValue(this.plugin.settings.loraWeights)
         .onChange(async (value) => {
           this.plugin.settings.loraWeights = value;
