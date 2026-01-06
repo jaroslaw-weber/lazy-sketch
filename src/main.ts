@@ -134,49 +134,63 @@ export default class LazySketchPlugin extends Plugin {
     const selectedPattern = this.settings.promptPatterns.find(
       p => p.name === this.settings.selectedPattern
     ) || this.settings.promptPatterns[0];
-    
+
     const formattedPrompt = selectedPattern.pattern.replace("{prompt}", userPrompt);
-    
+
     try {
       const requestBody = {
+        version: this.settings.defaultModel,
         input: {
-          prompt: formattedPrompt,
+          guidance_scale: 0,
+          height: 512,
+          lora_scales: [1],
           lora_weights: [this.settings.loraWeights],
-          lora_scales: [1]
+          num_inference_steps: 8,
+          output_format: "jpg",
+          output_quality: 80,
+          prompt: formattedPrompt,
+          width: 1024
         }
       };
-      
+
       console.log("=== REQUEST START ===");
       console.log("URL: https://api.replicate.com/v1/predictions");
       console.log("Request body:", JSON.stringify(requestBody, null, 2));
       console.log("Token:", this.settings.replicateApiToken.substring(0, 10) + "...");
-      
+
       const response = await requestUrl({
         url: "https://api.replicate.com/v1/predictions",
         method: "POST",
         headers: {
-          "Authorization": `Token ${this.settings.replicateApiToken}`
+          "Authorization": `Bearer ${this.settings.replicateApiToken}`,
+          "Content-Type": "application/json",
+          "Prefer": "wait"
         },
-        contentType: "application/json",
         body: JSON.stringify(requestBody)
       });
 
       console.log("=== RESPONSE START ===");
       console.log("Status:", response.status);
-      console.log("Headers:", response.headers);
-      console.log("Response body:", response.text);
       console.log("Response JSON:", response.json);
       console.log("=== RESPONSE END ===");
 
       const prediction = response.json;
-      
+
       if (prediction.error) {
         throw new Error(prediction.error);
       }
 
+      let attempts = 0;
+      const maxAttempts = 120;
+
       while (prediction.status !== "succeeded" && prediction.status !== "failed") {
+        attempts++;
+        if (attempts > maxAttempts) {
+          throw new Error("Timeout: Polling took too long");
+        }
+
         await new Promise(resolve => setTimeout(resolve, 1000));
-        
+
         const statusResponse = await requestUrl({
           url: prediction.urls.get,
           method: "GET",
@@ -184,9 +198,9 @@ export default class LazySketchPlugin extends Plugin {
             "Authorization": `Token ${this.settings.replicateApiToken}`
           }
         });
-        
+
         Object.assign(prediction, statusResponse.json);
-        console.log("Polling status:", prediction.status);
+        console.log(`[${attempts}s] Status: ${prediction.status}`);
       }
 
       if (prediction.status === "failed") {

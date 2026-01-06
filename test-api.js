@@ -1,17 +1,19 @@
 // Standalone test script for Replicate API
 // Run with: npm run test-api (reads from .env file)
-// Or: REPLICATE_API_TOKEN=your_token node test-api.js
 
-require('dotenv').config();
+require('dotenv').config({
+  path: '.env',
+  override: true
+});
 
 const API_TOKEN = process.env.REPLICATE_API_TOKEN;
 
 console.log("Token loaded:", API_TOKEN ? "Yes" : "No");
 console.log("Token length:", API_TOKEN ? API_TOKEN.length : 0);
+console.log("Token preview:", API_TOKEN ? API_TOKEN.substring(0, 7) : "N/A");
 
 if (!API_TOKEN) {
   console.error("Error: REPLICATE_API_TOKEN environment variable not set");
-  console.error("Run: REPLICATE_API_TOKEN=your_token npm run test-api");
   process.exit(1);
 }
 
@@ -35,17 +37,24 @@ function formatPrompt(userPrompt, patternName) {
 
 async function callReplicateAPI(userPrompt, patternName) {
   const formattedPrompt = formatPrompt(userPrompt, patternName);
-  
+
   console.log("=== REQUEST ===");
   console.log("Formatted prompt:", formattedPrompt);
   console.log("LoRA weights:", CONFIG.loraWeights);
   console.log("");
 
   const requestBody = {
+    version: CONFIG.model,
     input: {
-      prompt: formattedPrompt,
+      guidance_scale: 0,
+      height: 512,
+      lora_scales: [1],
       lora_weights: [CONFIG.loraWeights],
-      lora_scales: [1]
+      num_inference_steps: 8,
+      output_format: "jpg",
+      output_quality: 80,
+      prompt: formattedPrompt,
+      width: 1024
     }
   };
 
@@ -55,8 +64,9 @@ async function callReplicateAPI(userPrompt, patternName) {
   const response = await fetch("https://api.replicate.com/v1/predictions", {
     method: "POST",
     headers: {
-      "Authorization": `Token ${API_TOKEN}`,
-      "Content-Type": "application/json"
+      "Authorization": `Bearer ${API_TOKEN}`,
+      "Content-Type": "application/json",
+      "Prefer": "wait"
     },
     body: JSON.stringify(requestBody)
   });
@@ -88,7 +98,7 @@ async function callReplicateAPI(userPrompt, patternName) {
     }
 
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     const statusResponse = await fetch(prediction.urls.get, {
       headers: {
         "Authorization": `Token ${API_TOKEN}`
@@ -97,7 +107,7 @@ async function callReplicateAPI(userPrompt, patternName) {
 
     const statusData = await statusResponse.json();
     Object.assign(prediction, statusData);
-    
+
     console.log(`[${attempts}s] Status: ${prediction.status}`);
   }
 
@@ -118,7 +128,7 @@ async function main() {
 
   try {
     const imageUrl = await callReplicateAPI(CONFIG.userPrompt, CONFIG.pattern);
-    
+
     console.log("=== SUCCESS ===");
     console.log("Image URL:", imageUrl);
     console.log("");
