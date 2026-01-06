@@ -43,10 +43,12 @@ cp main.js manifest.json styles.css ~/.obsidian/plugins/obsidian-lazy-sketch/
 
 ## Setup
 
+### Required Configuration
+
 1. Get a Replicate API token at [https://replicate.com/account/api-tokens](https://replicate.com/account/api-tokens)
 2. Open Obsidian Settings → Community Plugins → Lazy Sketch
-3. Enter your API token in the settings
-4. Configure the model and LoRA weights (defaults are pre-configured for pencil sketches)
+3. **Enter your Replicate API Token** (required for the plugin to work)
+4. The model and LoRA weights are pre-configured for pencil sketches, but you can customize them if needed
 
 ## Usage
 
