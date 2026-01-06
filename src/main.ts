@@ -1,15 +1,37 @@
-import { App, Plugin, PluginSettingTab, Setting, Notice } from "obsidian";
+import { App, Plugin, PluginSettingTab, Setting, Notice, MarkdownView } from "obsidian";
+
+interface PromptPattern {
+  name: string;
+  pattern: string;
+}
 
 interface LazySketchSettings {
   replicateApiToken: string;
   defaultModel: string;
   loraWeights: string;
+  selectedPattern: string;
+  promptPatterns: PromptPattern[];
 }
 
 const DEFAULT_SETTINGS: LazySketchSettings = {
   replicateApiToken: "",
   defaultModel: "prunaai/z-image-turbo-lora",
-  loraWeights: "Ttio2/Z-Image-Turbo-pencil-sketch:Zimage_pencil_sketch"
+  loraWeights: "https://huggingface.co/Ttio2/Z-Image-Turbo-pencil-sketch/resolve/main/Zimage_pencil_sketch.safetensors",
+  selectedPattern: "cute",
+  promptPatterns: [
+    {
+      name: "cute",
+      pattern: "a color pencil sketch. clear white background. cute & fun & simple. {prompt}"
+    },
+    {
+      name: "detailed",
+      pattern: "a detailed pencil sketch. clean white background. intricate & realistic. {prompt}"
+    },
+    {
+      name: "whimsical",
+      pattern: "a playful pencil sketch. white background. whimsical & imaginative. {prompt}"
+    }
+  ]
 }
 
 export default class LazySketchPlugin extends Plugin {
@@ -35,12 +57,13 @@ export default class LazySketchPlugin extends Plugin {
       return;
     }
 
-    const activeView = this.app.workspace.activeLeaf?.view;
-    if (!activeView) return;
+    const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+    if (!activeView) {
+      new Notice("Please open a markdown file first");
+      return;
+    }
 
-    const editor = this.app.workspace.activeEditor;
-    if (!editor) return;
-
+    const editor = activeView.editor;
     const cursor = editor.getCursor();
     const selection = editor.getSelection();
 
@@ -100,7 +123,11 @@ export default class LazySketchPlugin extends Plugin {
   }
 
   async callReplicateAPI(userPrompt: string): Promise<string> {
-    const formattedPrompt = `a color pencil sketch. clear white background. cute & fun & simple. ${userPrompt}`;
+    const selectedPattern = this.settings.promptPatterns.find(
+      p => p.name === this.settings.selectedPattern
+    ) || this.settings.promptPatterns[0];
+    
+    const formattedPrompt = selectedPattern.pattern.replace("{prompt}", userPrompt);
     
     const response = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
@@ -109,10 +136,10 @@ export default class LazySketchPlugin extends Plugin {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        version: this.settings.defaultModel,
         input: {
           prompt: formattedPrompt,
-          lora_weights: this.settings.loraWeights,
+          lora_weights: [this.settings.loraWeights],
+          lora_scales: [1],
           num_inference_steps: 4,
           width: 1024,
           height: 1024
@@ -121,6 +148,8 @@ export default class LazySketchPlugin extends Plugin {
     });
 
     const prediction = await response.json();
+    
+    console.log("Replicate API response:", prediction);
     
     if (prediction.error) {
       throw new Error(prediction.error);
@@ -136,12 +165,14 @@ export default class LazySketchPlugin extends Plugin {
       });
       
       Object.assign(prediction, await statusResponse.json());
+      console.log("Polling status:", prediction.status);
     }
 
     if (prediction.status === "failed") {
       throw new Error(prediction.error || "Generation failed");
     }
 
+    console.log("Generated image:", prediction.output[0]);
     return prediction.output[0];
   }
 
@@ -204,5 +235,35 @@ class LazySketchSettingTab extends PluginSettingTab {
           this.plugin.settings.loraWeights = value;
           await this.plugin.saveSettings();
         }));
+
+    containerEl.createEl("h3", { text: "Prompt Patterns" });
+
+    new Setting(containerEl)
+      .setName("Selected Pattern")
+      .setDesc("Choose which prompt pattern to use for image generation")
+      .addDropdown(dropdown => {
+        this.plugin.settings.promptPatterns.forEach(pattern => {
+          dropdown.addOption(pattern.name, pattern.name);
+        });
+        dropdown.setValue(this.plugin.settings.selectedPattern);
+        dropdown.onChange(async (value) => {
+          this.plugin.settings.selectedPattern = value;
+          await this.plugin.saveSettings();
+          this.display();
+        });
+      });
+
+    this.plugin.settings.promptPatterns.forEach((pattern, index) => {
+      new Setting(containerEl)
+        .setName(`Pattern: ${pattern.name}`)
+        .setDesc("Use {prompt} as a placeholder for your user input")
+        .addTextArea(text => text
+          .setPlaceholder("a style description with {prompt}")
+          .setValue(pattern.pattern)
+          .onChange(async (value) => {
+            this.plugin.settings.promptPatterns[index].pattern = value;
+            await this.plugin.saveSettings();
+          }));
+    });
   }
 }

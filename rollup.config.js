@@ -1,11 +1,10 @@
-import typescript from "@rollup/plugin-typescript";
-import { nodeResolve } from "@rollup/plugin-node-resolve";
-import commonjs from "@rollup/plugin-commonjs";
-import copy from "rollup-plugin-copy";
+const typescript = require("@rollup/plugin-typescript");
+const { nodeResolve } = require("@rollup/plugin-node-resolve");
+const commonjs = require("@rollup/plugin-commonjs");
 
 const isProduction = process.env.BUILD === "production";
 
-export default {
+module.exports = {
   input: "src/main.ts",
   output: {
     dir: isProduction ? "." : ".",
@@ -19,11 +18,5 @@ export default {
     typescript(),
     nodeResolve({ browser: true }),
     commonjs(),
-    copy({
-      targets: [
-        { src: "manifest.json", dest: "." },
-        { src: "styles.css", dest: "." }
-      ]
-    })
   ]
 };
