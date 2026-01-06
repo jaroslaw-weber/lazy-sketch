@@ -146,20 +146,29 @@ export default class LazySketchPlugin extends Plugin {
         }
       };
       
+      console.log("=== REQUEST START ===");
+      console.log("URL: https://api.replicate.com/v1/predictions");
       console.log("Request body:", JSON.stringify(requestBody, null, 2));
+      console.log("Token:", this.settings.replicateApiToken.substring(0, 10) + "...");
       
       const response = await requestUrl({
         url: "https://api.replicate.com/v1/predictions",
         method: "POST",
         headers: {
-          "Authorization": `Token ${this.settings.replicateApiToken}`,
-          "Content-Type": "application/json"
+          "Authorization": `Token ${this.settings.replicateApiToken}`
         },
+        contentType: "application/json",
         body: JSON.stringify(requestBody)
       });
 
+      console.log("=== RESPONSE START ===");
+      console.log("Status:", response.status);
+      console.log("Headers:", response.headers);
+      console.log("Response body:", response.text);
+      console.log("Response JSON:", response.json);
+      console.log("=== RESPONSE END ===");
+
       const prediction = response.json;
-      console.log("Replicate API response:", prediction);
       
       if (prediction.error) {
         throw new Error(prediction.error);
@@ -187,6 +196,10 @@ export default class LazySketchPlugin extends Plugin {
       console.log("Generated image:", prediction.output[0]);
       return prediction.output[0];
     } catch (error) {
+      console.error("=== ERROR CAUGHT ===");
+      console.error("Error type:", error?.constructor?.name);
+      console.error("Error message:", error?.message);
+      console.error("Error stack:", error?.stack);
       if (error instanceof Error) {
         throw error;
       }
