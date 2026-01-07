@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    // Obsidian Lazy Sketch Plugin TypeScript Config
     "baseUrl": ".",
     "inlineSourceMap": true,
     "inlineSources": true,
