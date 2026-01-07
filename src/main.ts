@@ -75,10 +75,12 @@ export default class LazySketchPlugin extends Plugin {
     try {
       const imageUrl = await this.callReplicateAPI(prompt);
       
+      const imagePath = await this.downloadAndSaveImage(imageUrl, prompt);
+      
       if (!selection) {
-        editor.replaceRange(`![${prompt}](${imageUrl})\n`, cursor);
+        editor.replaceRange(`![${prompt}](${imagePath})\n`, cursor);
       } else {
-        editor.replaceSelection(`![${prompt}](${imageUrl})`);
+        editor.replaceSelection(`![${prompt}](${imagePath})`);
       }
       
       new Notice("Sketch generated successfully!");
@@ -128,6 +130,29 @@ export default class LazySketchPlugin extends Plugin {
         }
       });
     });
+  }
+
+  async downloadAndSaveImage(imageUrl: string, prompt: string): Promise<string> {
+    const adapter = this.app.vault.adapter;
+    const filesDir = "files";
+    
+    if (!await adapter.exists(filesDir)) {
+      await adapter.mkdir(filesDir);
+    }
+    
+    const response = await requestUrl({
+      url: imageUrl,
+      method: "GET"
+    });
+    
+    const timestamp = Date.now();
+    const sanitizedPrompt = prompt.replace(/[^a-zA-Z0-9]/g, "_").substring(0, 50);
+    const filename = `sketch_${sanitizedPrompt}_${timestamp}.jpg`;
+    const filePath = `${filesDir}/${filename}`;
+    
+    await adapter.writeBinary(filePath, response.arrayBuffer);
+    
+    return filePath;
   }
 
   async callReplicateAPI(userPrompt: string): Promise<string> {

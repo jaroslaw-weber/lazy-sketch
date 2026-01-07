@@ -4,11 +4,12 @@ const commonjs = require("@rollup/plugin-commonjs");
 const copy = require("rollup-plugin-copy");
 
 const isProduction = process.env.BUILD === "production";
+const outputDir = process.env.OUTPUT_DIR || "dist";
 
 module.exports = {
   input: "src/main.ts",
   output: {
-    dir: "/Users/jarek/Documents/Obsydian/jj house/.obsidian/plugins/lazy-sketch",
+    dir: outputDir,
     sourcemap: isProduction ? false : "inline",
     sourcemapExcludeSources: isProduction,
     format: "cjs",
@@ -21,8 +22,8 @@ module.exports = {
     commonjs(),
     copy({
       targets: [
-        { src: "manifest.json", dest: "/Users/jarek/Documents/Obsydian/jj house/.obsidian/plugins/lazy-sketch" },
-        { src: "styles.css", dest: "/Users/jarek/Documents/Obsydian/jj house/.obsidian/plugins/lazy-sketch" }
+        { src: "manifest.json", dest: outputDir },
+        { src: "styles.css", dest: outputDir }
       ]
     })
   ]
