@@ -1,3 +1,4 @@
+// Obsidian Lazy Sketch Plugin Build Config
 const typescript = require("@rollup/plugin-typescript");
 const { nodeResolve } = require("@rollup/plugin-node-resolve");
 const commonjs = require("@rollup/plugin-commonjs");
