@@ -8,7 +8,9 @@ Generate AI-powered sketches directly in your Obsidian notes using the Replicate
 
 Watch the plugin in action:
 
-![Lazy Sketch Demo](assets/demo.mp4)
+
+https://github.com/user-attachments/assets/764d1cc4-0a2d-4fc6-b9ec-eb4c0f932e8d
+
 
 ## Features
 
