@@ -23,7 +23,7 @@ module.exports = {
     copy({
       targets: [
         { src: "manifest.json", dest: outputDir },
-        { src: "styles.css", dest: outputDir }
+        { src: "src/styles.css", dest: outputDir }
       ]
     })
   ]
