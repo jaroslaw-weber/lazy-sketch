@@ -1,5 +1,5 @@
 {
-  "name": "obsidian-lazy-sketch",
+  "name": "obsidian-lazy-sketch-plugin",
   "version": "1.0.0",
   "description": "Generate AI sketches directly in your Obsidian notes using Replicate API",
   "main": "main.js",
