@@ -9,7 +9,7 @@ if (!obsidianPath) {
   process.exit(1);
 }
 
-const pluginDir = path.join(obsidianPath, '.obsidian', 'plugins', 'obsidian-lazy-sketch');
+const pluginDir = path.join(obsidianPath, '.obsidian', 'plugins', 'obsidian-lazy-sketch-plugin');
 
 if (!fs.existsSync(pluginDir)) {
   fs.mkdirSync(pluginDir, { recursive: true });

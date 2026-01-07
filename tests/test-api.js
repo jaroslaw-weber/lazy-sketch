@@ -1,5 +1,6 @@
 // Standalone test script for Replicate API
 // Run with: npm run test-api (reads from .env file)
+// Obsidian Lazy Sketch Plugin
 
 require('dotenv').config({
   path: '.env',

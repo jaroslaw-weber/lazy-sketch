@@ -23,7 +23,7 @@ Watch the plugin in action:
 
 ### Manual Installation
 
-1. Download the latest release from the [Releases](https://github.com/jaroslaw-weber/obsidian-lazy-sketch/releases) page
+1. Download the latest release from the [Releases](https://github.com/jaroslaw-weber/obsidian-lazy-sketch-plugin/releases) page
 2. Extract the downloaded zip file
 3. Copy the extracted folder to your Obsidian plugins directory:
    - **macOS**: `~/.obsidian/plugins/`
@@ -35,8 +35,8 @@ Watch the plugin in action:
 
 ```bash
 # Clone the repository
-git clone https://github.com/jaroslaw-weber/obsidian-lazy-sketch.git
-cd obsidian-lazy-sketch
+git clone https://github.com/jaroslaw-weber/obsidian-lazy-sketch-plugin.git
+cd obsidian-lazy-sketch-plugin
 
 # Install dependencies
 npm install
@@ -184,4 +184,4 @@ MIT License - see LICENSE file for details
 
 ## Support
 
-For issues and feature requests, please use the [GitHub Issues](https://github.com/jaroslaw-weber/obsidian-lazy-sketch/issues) page.
+For issues and feature requests, please use the [GitHub Issues](https://github.com/jaroslaw-weber/obsidian-lazy-sketch-plugin/issues) page.
