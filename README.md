@@ -117,7 +117,7 @@ Required for image generation. Get your token at [Replicate API Tokens](https://
 The Replicate model to use for generation. The default is `prunaai/z-image-turbo-lora` which is optimized for fast pencil sketch generation.
 
 ### LoRA Weights URL
-The huggingface URL for the LoRA weights that define the pencil sketch style. Default: `https://huggingface.co/Ttio2/Z-Image-Turbo-pencil-sketch/resolve/main/Zimage_pencil_sketch.safetensors`
+The huggingface URL for the LoRA weights that define the pencil sketch style. Default: `https://huggingface.co/Ttio2/Z-Image-Turbo-pencil-sketch/blob/main/Zimage_pencil_sketch.safetensors`
 
 ### Prompt Patterns
 Customize the prompt templates that wrap your user input. Use `{prompt}` as a placeholder for your actual prompt.

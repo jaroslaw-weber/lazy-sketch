@@ -16,7 +16,7 @@ interface LazySketchSettings {
 const DEFAULT_SETTINGS: LazySketchSettings = {
   replicateApiToken: "",
   defaultModel: "prunaai/z-image-turbo-lora:197b2db2015aa366d2bc61a941758adf4c31ac66b18573f5c66dc388ab081ca2",
-  loraWeights: "https://huggingface.co/Ttio2/Z-Image-Turbo-pencil-sketch/resolve/main/Zimage_pencil_sketch.safetensors",
+  loraWeights: "https://huggingface.co/Ttio2/Z-Image-Turbo-pencil-sketch/blob/main/Zimage_pencil_sketch.safetensors",
   selectedPattern: "cute",
   promptPatterns: [
     {
