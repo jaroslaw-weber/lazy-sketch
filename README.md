@@ -150,7 +150,6 @@ npm run build
 
 ## Troubleshooting
 
-
 ### "Please set your Replicate API token in settings"
 Make sure you've entered your API token in the plugin settings. Get one at [Replicate API Tokens](https://replicate.com/account/api-tokens).
 
