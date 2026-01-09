@@ -42,7 +42,7 @@ export default class LazySketchPlugin extends Plugin {
 
     this.addCommand({
       id: "generate-sketch",
-      name: "Generate sketch",
+      name: "Generate sketch.",
       callback: () => this.generateSketch()
     });
 
@@ -51,13 +51,13 @@ export default class LazySketchPlugin extends Plugin {
 
   async generateSketch() {
     if (!this.settings.replicateApiToken) {
-      new Notice("Please set your Replicate API token in settings");
+      new Notice("Please set your Replicate API token in settings.");
       return;
     }
 
     const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
     if (!activeView) {
-      new Notice("Please open a markdown file first");
+      new Notice("Please open a markdown file first.");
       return;
     }
 
@@ -105,11 +105,11 @@ export default class LazySketchPlugin extends Plugin {
       }
       
       loadingModal.close();
-      new Notice("Sketch generated successfully!");
+      new Notice("Sketch generated successfully.");
     } catch (error) {
       loadingModal.close();
-      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-      new Notice(`Error: ${errorMessage}\nCheck console (Ctrl+Shift+I) for details`);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred.";
+      new Notice(`Error: ${errorMessage}.\nCheck console (Ctrl+Shift+I) for details.`);
     }
   }
 
@@ -125,7 +125,7 @@ export default class LazySketchPlugin extends Plugin {
 
         onOpen() {
           const { contentEl } = this;
-          contentEl.createEl("h2", { text: "Enter your sketch prompt" });
+          contentEl.createEl("h2", { text: "Enter your sketch prompt." });
 
           const input = contentEl.createEl("input", {
             type: "text",
@@ -136,7 +136,7 @@ export default class LazySketchPlugin extends Plugin {
           const buttonContainer = contentEl.createDiv({ cls: "modal-button-container" });
 
           const generateButton = buttonContainer.createEl("button", {
-            text: "Generate",
+            text: "Generate.",
             cls: "mod-cta"
           });
           generateButton.onClickEvent(() => {
@@ -145,7 +145,7 @@ export default class LazySketchPlugin extends Plugin {
           });
 
           const cancelButton = buttonContainer.createEl("button", {
-            text: "Cancel"
+            text: "Cancel."
           });
           cancelButton.onClickEvent(() => {
             this.resolve(null);
@@ -240,7 +240,7 @@ export default class LazySketchPlugin extends Plugin {
       while (prediction.status !== "succeeded" && prediction.status !== "failed") {
         attempts++;
         if (attempts > maxAttempts) {
-          throw new Error("Timeout: Polling took too long");
+          throw new Error("Timeout: Polling took too long.");
         }
 
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -257,7 +257,7 @@ export default class LazySketchPlugin extends Plugin {
       }
 
       if (prediction.status === "failed") {
-        throw new Error(prediction.error || "Generation failed");
+        throw new Error(prediction.error || "Generation failed.");
       }
 
       return prediction.output[0];
@@ -265,7 +265,7 @@ export default class LazySketchPlugin extends Plugin {
       if (error instanceof Error) {
         throw error;
       }
-      throw new Error("Failed to connect to Replicate API");
+      throw new Error("Failed to connect to Replicate API.");
     }
   }
 
@@ -300,7 +300,7 @@ class LazySketchSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Replicate API token")
-      .setDesc("Enter your Replicate API token. Get one at https://replicate.com/account/api-tokens")
+      .setDesc("Enter your Replicate API token. Get one at https://replicate.com/account/api-tokens.")
       .addText(text => text
         .setPlaceholder("r8_...")
         .setValue(this.plugin.settings.replicateApiToken)
@@ -311,7 +311,7 @@ class LazySketchSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Default model")
-      .setDesc("Enter the default Replicate model to use for image generation")
+      .setDesc("Enter the default Replicate model to use for image generation.")
       .addText(text => text
         .setPlaceholder("prunaai/z-image-turbo-lora")
         .setValue(this.plugin.settings.defaultModel)
@@ -322,7 +322,7 @@ class LazySketchSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("LoRA weights URL")
-      .setDesc("Enter the huggingface URL for the LoRA weights")
+      .setDesc("Enter the huggingface URL for the LoRA weights.")
       .addText(text => text
         .setPlaceholder("https://huggingface.co/...")
         .setValue(this.plugin.settings.loraWeights)
@@ -337,7 +337,7 @@ class LazySketchSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Selected pattern")
-      .setDesc("Choose which prompt pattern to use for image generation")
+      .setDesc("Choose which prompt pattern to use for image generation.")
       .addDropdown(dropdown => {
         this.plugin.settings.promptPatterns.forEach(pattern => {
           dropdown.addOption(pattern.name, pattern.name);
@@ -353,7 +353,7 @@ class LazySketchSettingTab extends PluginSettingTab {
     this.plugin.settings.promptPatterns.forEach((pattern, index) => {
       new Setting(containerEl)
         .setName(`Pattern: ${pattern.name}`)
-        .setDesc("Use {prompt} as a placeholder for your user input")
+        .setDesc("Use {prompt} as a placeholder for your user input.")
         .addTextArea(text => text
           .setPlaceholder("a style description with {prompt}")
           .setValue(pattern.pattern)
