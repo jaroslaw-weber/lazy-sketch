@@ -68,7 +68,30 @@ export default class LazySketchPlugin extends Plugin {
     const prompt = selection || await this.promptForPrompt();
     if (!prompt) return;
 
-    new Notice("Generating sketch...");
+    class LoadingModal extends Modal {
+      constructor(app: App) {
+        super(app);
+      }
+
+      onOpen() {
+        const { contentEl } = this;
+        contentEl.createEl("h2", { text: "Generating sketch..." });
+
+        const spinnerContainer = contentEl.createDiv({ cls: "ls-spinner-container" });
+        spinnerContainer.createDiv({ cls: "ls-spinner" });
+
+        const statusText = contentEl.createDiv({ cls: "ls-status-text" });
+        statusText.setText("Waiting for AI generation...");
+      }
+
+      onClose() {
+        const { contentEl } = this;
+        contentEl.empty();
+      }
+    }
+
+    const loadingModal = new LoadingModal(this.app);
+    loadingModal.open();
 
     try {
       const imageUrl = await this.callReplicateAPI(prompt);
@@ -81,8 +104,10 @@ export default class LazySketchPlugin extends Plugin {
         editor.replaceSelection(`![${prompt}](${imagePath})`);
       }
       
+      loadingModal.close();
       new Notice("Sketch generated successfully!");
     } catch (error) {
+      loadingModal.close();
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
       new Notice(`Error: ${errorMessage}\nCheck console (Ctrl+Shift+I) for details`);
     }
