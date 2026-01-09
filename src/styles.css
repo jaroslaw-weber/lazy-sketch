@@ -1,1 +1,5 @@
-/* Plugin styles go here */
+.ls-prompt-input {
+  width: 100%;
+  padding: 8px;
+  margin: 10px 0;
+}

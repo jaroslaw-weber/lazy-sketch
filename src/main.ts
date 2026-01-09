@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, Notice, MarkdownView, requestUrl } from "obsidian";
+import { App, Plugin, PluginSettingTab, Setting, Notice, MarkdownView, requestUrl, Modal } from "obsidian";
 
 interface PromptPattern {
   name: string;
@@ -38,13 +38,11 @@ export default class LazySketchPlugin extends Plugin {
   settings: LazySketchSettings;
 
   async onload() {
-    console.log("Loading Lazy Sketch plugin");
-
     await this.loadSettings();
 
     this.addCommand({
       id: "generate-sketch",
-      name: "Generate Sketch",
+      name: "Generate sketch",
       callback: () => this.generateSketch()
     });
 
@@ -86,49 +84,65 @@ export default class LazySketchPlugin extends Plugin {
       new Notice("Sketch generated successfully!");
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-      console.error("Full error:", error);
       new Notice(`Error: ${errorMessage}\nCheck console (Ctrl+Shift+I) for details`);
     }
   }
 
   async promptForPrompt(): Promise<string | null> {
     return await new Promise((resolve) => {
-      const input = document.createElement("input");
-      input.placeholder = "Enter your sketch prompt...";
-      input.style.cssText = "padding: 10px; margin: 10px; width: 80%;";
-      
-      const modal = document.createElement("div");
-      modal.style.cssText = "position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--background-primary); padding: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;";
-      
-      const button = document.createElement("button");
-      button.textContent = "Generate";
-      button.style.cssText = "padding: 8px 16px; margin-left: 10px; cursor: pointer;";
-      button.onclick = () => {
-        resolve(input.value || null);
-        modal.remove();
-      };
-      
-      const cancelButton = document.createElement("button");
-      cancelButton.textContent = "Cancel";
-      cancelButton.style.cssText = "padding: 8px 16px; margin-left: 10px; cursor: pointer;";
-      cancelButton.onclick = () => {
-        resolve(null);
-        modal.remove();
-      };
-      
-      modal.appendChild(input);
-      modal.appendChild(button);
-      modal.appendChild(cancelButton);
-      document.body.appendChild(modal);
-      
-      input.focus();
-      
-      input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          resolve(input.value || null);
-          modal.remove();
+      class PromptModal extends Modal {
+        constructor(app: App, resolve: (value: string | null) => void) {
+          super(app);
+          this.resolve = resolve;
         }
-      });
+
+        resolve: (value: string | null) => void;
+
+        onOpen() {
+          const { contentEl } = this;
+          contentEl.createEl("h2", { text: "Enter your sketch prompt" });
+
+          const input = contentEl.createEl("input", {
+            type: "text",
+            placeholder: "Enter your sketch prompt..."
+          });
+          input.addClass("ls-prompt-input");
+
+          const buttonContainer = contentEl.createDiv({ cls: "modal-button-container" });
+
+          const generateButton = buttonContainer.createEl("button", {
+            text: "Generate",
+            cls: "mod-cta"
+          });
+          generateButton.onClickEvent(() => {
+            this.resolve(input.value || null);
+            this.close();
+          });
+
+          const cancelButton = buttonContainer.createEl("button", {
+            text: "Cancel"
+          });
+          cancelButton.onClickEvent(() => {
+            this.resolve(null);
+            this.close();
+          });
+
+          input.focus();
+          input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              this.resolve(input.value || null);
+              this.close();
+            }
+          });
+        }
+
+        onClose() {
+          const { contentEl } = this;
+          contentEl.empty();
+        }
+      }
+
+      new PromptModal(this.app, resolve).open();
     });
   }
 
@@ -178,11 +192,6 @@ export default class LazySketchPlugin extends Plugin {
         }
       };
 
-      console.log("=== REQUEST START ===");
-      console.log("URL: https://api.replicate.com/v1/predictions");
-      console.log("Request body:", JSON.stringify(requestBody, null, 2));
-      console.log("Token:", JSON.stringify(this.settings.replicateApiToken));
-
       const response = await requestUrl({
         url: "https://api.replicate.com/v1/predictions",
         method: "POST",
@@ -193,11 +202,6 @@ export default class LazySketchPlugin extends Plugin {
         },
         body: JSON.stringify(requestBody)
       });
-
-      console.log("=== RESPONSE START ===");
-      console.log("Status:", response.status);
-      console.log("Response JSON:", response.json);
-      console.log("=== RESPONSE END ===");
 
       const prediction = response.json;
 
@@ -225,20 +229,14 @@ export default class LazySketchPlugin extends Plugin {
         });
 
         Object.assign(prediction, statusResponse.json);
-        console.log(`[${attempts}s] Status: ${prediction.status}`);
       }
 
       if (prediction.status === "failed") {
         throw new Error(prediction.error || "Generation failed");
       }
 
-      console.log("Generated image:", prediction.output[0]);
       return prediction.output[0];
     } catch (error) {
-      console.error("=== ERROR CAUGHT ===");
-      console.error("Error type:", error?.constructor?.name);
-      console.error("Error message:", error?.message);
-      console.error("Error stack:", error?.stack);
       if (error instanceof Error) {
         throw error;
       }
@@ -255,7 +253,6 @@ export default class LazySketchPlugin extends Plugin {
   }
 
   onunload() {
-    console.log("Unloading Lazy Sketch plugin");
   }
 }
 
@@ -271,10 +268,13 @@ class LazySketchSettingTab extends PluginSettingTab {
     const { containerEl } = this;
 
     containerEl.empty();
-    containerEl.createEl("h2", { text: "Lazy Sketch Settings" });
 
     new Setting(containerEl)
-      .setName("Replicate API Token")
+      .setHeading()
+      .setName("Lazy sketch settings");
+
+    new Setting(containerEl)
+      .setName("Replicate API token")
       .setDesc("Enter your Replicate API token. Get one at https://replicate.com/account/api-tokens")
       .addText(text => text
         .setPlaceholder("r8_...")
@@ -285,7 +285,7 @@ class LazySketchSettingTab extends PluginSettingTab {
         }));
 
     new Setting(containerEl)
-      .setName("Default Model")
+      .setName("Default model")
       .setDesc("Enter the default Replicate model to use for image generation")
       .addText(text => text
         .setPlaceholder("prunaai/z-image-turbo-lora")
@@ -296,7 +296,7 @@ class LazySketchSettingTab extends PluginSettingTab {
         }));
 
     new Setting(containerEl)
-      .setName("LoRA Weights URL")
+      .setName("LoRA weights URL")
       .setDesc("Enter the huggingface URL for the LoRA weights")
       .addText(text => text
         .setPlaceholder("https://huggingface.co/...")
@@ -306,10 +306,12 @@ class LazySketchSettingTab extends PluginSettingTab {
           await this.plugin.saveSettings();
         }));
 
-    containerEl.createEl("h3", { text: "Prompt Patterns" });
+    new Setting(containerEl)
+      .setHeading()
+      .setName("Prompt patterns");
 
     new Setting(containerEl)
-      .setName("Selected Pattern")
+      .setName("Selected pattern")
       .setDesc("Choose which prompt pattern to use for image generation")
       .addDropdown(dropdown => {
         this.plugin.settings.promptPatterns.forEach(pattern => {
