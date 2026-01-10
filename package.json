@@ -4,6 +4,7 @@
   "description": "Generate AI sketches directly in your Obsidian notes using Replicate API",
   "main": "main.js",
   "scripts": {
+    "lint": "eslint \"**/*.ts\"",
     "dev": "rollup --config rollup.config.js -w",
     "build": "rollup --config rollup.config.js --environment BUILD:production && node scripts/copy-to-obsidian.js",
     "test-api": "node test-api.js"
@@ -23,6 +24,8 @@
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-typescript": "^11.1.5",
     "@types/node": "^20.10.6",
+    "eslint": "^9.39.2",
+    "eslint-plugin-obsidianmd": "^0.1.9",
     "obsidian": "^1.4.0",
     "rollup": "^4.9.1",
     "rollup-plugin-copy": "^3.5.0",
