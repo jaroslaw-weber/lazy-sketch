@@ -74,7 +74,7 @@ export default class LazySketchPlugin extends Plugin {
 
   async generateSketch() {
     if (!this.settings.replicateApiToken) {
-      new Notice("Please set your Replicate API token in settings");
+      new Notice("Please set your replicate API token in settings.");
       return;
     }
 
@@ -349,7 +349,6 @@ class LazySketchSettingTab extends PluginSettingTab {
       )
       .addText((text) =>
         text
-          .setPlaceholder("R8_...")
           .setValue(this.plugin.settings.replicateApiToken)
           .onChange(async (value) => {
             this.plugin.settings.replicateApiToken = value;
@@ -359,10 +358,9 @@ class LazySketchSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Default model")
-      .setDesc("Enter the default Replicate model to use for image generation")
+      .setDesc("Enter the default replicate model to use for image generation")
       .addText((text) =>
         text
-          .setPlaceholder("prunaai/z-image-turbo-lora")
           .setValue(this.plugin.settings.defaultModel)
           .onChange(async (value) => {
             this.plugin.settings.defaultModel = value;
@@ -371,11 +369,10 @@ class LazySketchSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("LoRA weights URL")
-      .setDesc("Enter the HuggingFace URL for the LoRA weights")
+      .setName("Lora weights URL")
+      .setDesc("Enter the huggingface URL for the lora weights")
       .addText((text) =>
         text
-          .setPlaceholder("https://huggingface.co/...")
           .setValue(this.plugin.settings.loraWeights)
           .onChange(async (value) => {
             this.plugin.settings.loraWeights = value;
