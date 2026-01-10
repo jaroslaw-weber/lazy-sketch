@@ -1,4 +1,13 @@
-import { App, Plugin, PluginSettingTab, Setting, Notice, MarkdownView, requestUrl, Modal } from "obsidian";
+import {
+  App,
+  Plugin,
+  PluginSettingTab,
+  Setting,
+  Notice,
+  MarkdownView,
+  requestUrl,
+  Modal,
+} from "obsidian";
 
 interface PromptPattern {
   name: string;
@@ -24,24 +33,29 @@ interface LazySketchSettings {
 
 const DEFAULT_SETTINGS: LazySketchSettings = {
   replicateApiToken: "",
-  defaultModel: "prunaai/z-image-turbo-lora:197b2db2015aa366d2bc61a941758adf4c31ac66b18573f5c66dc388ab081ca2",
-  loraWeights: "https://huggingface.co/Ttio2/Z-Image-Turbo-pencil-sketch/blob/main/Zimage_pencil_sketch.safetensors",
+  defaultModel:
+    "prunaai/z-image-turbo-lora:197b2db2015aa366d2bc61a941758adf4c31ac66b18573f5c66dc388ab081ca2",
+  loraWeights:
+    "https://huggingface.co/Ttio2/Z-Image-Turbo-pencil-sketch/blob/main/Zimage_pencil_sketch.safetensors",
   selectedPattern: "cute",
   promptPatterns: [
     {
       name: "cute",
-      pattern: "a color pencil sketch. clear white background. cute & fun & simple. {prompt}"
+      pattern:
+        "a color pencil sketch. clear white background. cute & fun & simple. {prompt}",
     },
     {
       name: "detailed",
-      pattern: "a detailed pencil sketch. clean white background. intricate & realistic. {prompt}"
+      pattern:
+        "a detailed pencil sketch. clean white background. intricate & realistic. {prompt}",
     },
     {
       name: "whimsical",
-      pattern: "a playful pencil sketch. white background. whimsical & imaginative. {prompt}"
-    }
-  ]
-}
+      pattern:
+        "a playful pencil sketch. white background. whimsical & imaginative. {prompt}",
+    },
+  ],
+};
 
 export default class LazySketchPlugin extends Plugin {
   settings: LazySketchSettings;
@@ -52,7 +66,7 @@ export default class LazySketchPlugin extends Plugin {
     this.addCommand({
       id: "generate-sketch",
       name: "Generate sketch",
-      callback: () => this.generateSketch()
+      callback: () => this.generateSketch(),
     });
 
     this.addSettingTab(new LazySketchSettingTab(this.app, this));
@@ -60,13 +74,13 @@ export default class LazySketchPlugin extends Plugin {
 
   async generateSketch() {
     if (!this.settings.replicateApiToken) {
-      new Notice("please set your replicate api token in settings");
+      new Notice("Please set your Replicate API token in settings");
       return;
     }
 
     const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
     if (!activeView) {
-      new Notice("please open a markdown file first");
+      new Notice("Please open a Markdown file first");
       return;
     }
 
@@ -74,7 +88,7 @@ export default class LazySketchPlugin extends Plugin {
     const cursor = editor.getCursor();
     const selection = editor.getSelection();
 
-    const prompt = selection || await this.promptForPrompt();
+    const prompt = selection || (await this.promptForPrompt());
     if (!prompt) return;
 
     class LoadingModal extends Modal {
@@ -86,7 +100,9 @@ export default class LazySketchPlugin extends Plugin {
         const { contentEl } = this;
         contentEl.createEl("h2", { text: "Generating sketch..." });
 
-        const spinnerContainer = contentEl.createDiv({ cls: "ls-spinner-container" });
+        const spinnerContainer = contentEl.createDiv({
+          cls: "ls-spinner-container",
+        });
         spinnerContainer.createDiv({ cls: "ls-spinner" });
 
         const statusText = contentEl.createDiv({ cls: "ls-status-text" });
@@ -104,21 +120,24 @@ export default class LazySketchPlugin extends Plugin {
 
     try {
       const imageUrl = await this.callReplicateAPI(prompt);
-      
+
       const imagePath = await this.downloadAndSaveImage(imageUrl, prompt);
-      
+
       if (!selection) {
         editor.replaceRange(`![${prompt}](${imagePath})\n`, cursor);
       } else {
         editor.replaceSelection(`![${prompt}](${imagePath})`);
       }
-      
+
       loadingModal.close();
       new Notice("Sketch generated successfully.");
     } catch (error) {
       loadingModal.close();
-      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred.";
-      new Notice(`Error: ${errorMessage}.\nCheck console (Ctrl+Shift+I) for details.`);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred.";
+      new Notice(
+        `Error: ${errorMessage}.\nCheck console (Ctrl+Shift+I) for details.`
+      );
     }
   }
 
@@ -138,15 +157,17 @@ export default class LazySketchPlugin extends Plugin {
 
           const input = contentEl.createEl("input", {
             type: "text",
-            placeholder: "Enter your sketch prompt..."
+            placeholder: "Enter your sketch prompt...",
           });
           input.addClass("ls-prompt-input");
 
-          const buttonContainer = contentEl.createDiv({ cls: "modal-button-container" });
+          const buttonContainer = contentEl.createDiv({
+            cls: "modal-button-container",
+          });
 
           const generateButton = buttonContainer.createEl("button", {
             text: "Generate.",
-            cls: "mod-cta"
+            cls: "mod-cta",
           });
           generateButton.onClickEvent(() => {
             this.resolve(input.value || null);
@@ -154,7 +175,7 @@ export default class LazySketchPlugin extends Plugin {
           });
 
           const cancelButton = buttonContainer.createEl("button", {
-            text: "Cancel."
+            text: "Cancel.",
           });
           cancelButton.onClickEvent(() => {
             this.resolve(null);
@@ -180,35 +201,44 @@ export default class LazySketchPlugin extends Plugin {
     });
   }
 
-  async downloadAndSaveImage(imageUrl: string, prompt: string): Promise<string> {
+  async downloadAndSaveImage(
+    imageUrl: string,
+    prompt: string
+  ): Promise<string> {
     const adapter = this.app.vault.adapter;
     const filesDir = "files";
-    
-    if (!await adapter.exists(filesDir)) {
+
+    if (!(await adapter.exists(filesDir))) {
       await adapter.mkdir(filesDir);
     }
-    
+
     const response = await requestUrl({
       url: imageUrl,
-      method: "GET"
+      method: "GET",
     });
-    
+
     const timestamp = Date.now();
-    const sanitizedPrompt = prompt.replace(/[^a-zA-Z0-9]/g, "_").substring(0, 50);
+    const sanitizedPrompt = prompt
+      .replace(/[^a-zA-Z0-9]/g, "_")
+      .substring(0, 50);
     const filename = `sketch_${sanitizedPrompt}_${timestamp}.jpg`;
     const filePath = `${filesDir}/${filename}`;
-    
+
     await adapter.writeBinary(filePath, response.arrayBuffer);
-    
+
     return filePath;
   }
 
   async callReplicateAPI(userPrompt: string): Promise<string> {
-    const selectedPattern = this.settings.promptPatterns.find(
-      p => p.name === this.settings.selectedPattern
-    ) || this.settings.promptPatterns[0];
+    const selectedPattern =
+      this.settings.promptPatterns.find(
+        (p) => p.name === this.settings.selectedPattern
+      ) || this.settings.promptPatterns[0];
 
-    const formattedPrompt = selectedPattern.pattern.replace("{prompt}", userPrompt);
+    const formattedPrompt = selectedPattern.pattern.replace(
+      "{prompt}",
+      userPrompt
+    );
 
     try {
       const requestBody = {
@@ -222,19 +252,19 @@ export default class LazySketchPlugin extends Plugin {
           output_format: "jpg",
           output_quality: 80,
           prompt: formattedPrompt,
-          width: 1024
-        }
+          width: 1024,
+        },
       };
 
       const response = await requestUrl({
         url: "https://api.replicate.com/v1/predictions",
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${this.settings.replicateApiToken}`,
+          Authorization: `Bearer ${this.settings.replicateApiToken}`,
           "Content-Type": "application/json",
-          "Prefer": "wait"
+          Prefer: "wait",
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       const prediction = response.json as ReplicatePrediction;
@@ -246,21 +276,24 @@ export default class LazySketchPlugin extends Plugin {
       let attempts = 0;
       const maxAttempts = 120;
 
-      while (prediction.status !== "succeeded" && prediction.status !== "failed") {
+      while (
+        prediction.status !== "succeeded" &&
+        prediction.status !== "failed"
+      ) {
         attempts++;
         if (attempts > maxAttempts) {
           throw new Error("Timeout: Polling took too long.");
         }
 
         // eslint-disable-next-line no-undef
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
 
         const statusResponse = await requestUrl({
           url: prediction.urls.get,
           method: "GET",
           headers: {
-            "Authorization": `Token ${this.settings.replicateApiToken}`
-          }
+            Authorization: `Token ${this.settings.replicateApiToken}`,
+          },
         });
 
         Object.assign(prediction, statusResponse.json as ReplicatePrediction);
@@ -280,15 +313,18 @@ export default class LazySketchPlugin extends Plugin {
   }
 
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData()) as LazySketchSettings;
+    this.settings = Object.assign(
+      {},
+      DEFAULT_SETTINGS,
+      await this.loadData()
+    ) as LazySketchSettings;
   }
 
   async saveSettings() {
     await this.saveData(this.settings);
   }
 
-  onunload() {
-  }
+  onunload() {}
 }
 
 class LazySketchSettingTab extends PluginSettingTab {
@@ -304,52 +340,56 @@ class LazySketchSettingTab extends PluginSettingTab {
 
     containerEl.empty();
 
-    new Setting(containerEl)
-      .setHeading()
-      .setName("Lazy sketch settings");
+    new Setting(containerEl).setHeading().setName("Lazy sketch settings");
 
     new Setting(containerEl)
-      .setName("replicate api token")
-      .setDesc("enter your replicate api token. get one at https://replicate.com/account/api-tokens")
-      .addText(text => text
-        .setPlaceholder("r8_...")
-        .setValue(this.plugin.settings.replicateApiToken)
-        .onChange(async (value) => {
-          this.plugin.settings.replicateApiToken = value;
-          await this.plugin.saveSettings();
-        }));
+      .setName("Replicate API token")
+      .setDesc(
+        "Enter your Replicate API token. Get one at https://replicate.com/account/api-tokens"
+      )
+      .addText((text) =>
+        text
+          .setPlaceholder("R8_...")
+          .setValue(this.plugin.settings.replicateApiToken)
+          .onChange(async (value) => {
+            this.plugin.settings.replicateApiToken = value;
+            await this.plugin.saveSettings();
+          })
+      );
 
     new Setting(containerEl)
-      .setName("default model")
-      .setDesc("enter the default replicate model to use for image generation")
-      .addText(text => text
-        .setPlaceholder("prunaai/z-image-turbo-lora")
-        .setValue(this.plugin.settings.defaultModel)
-        .onChange(async (value) => {
-          this.plugin.settings.defaultModel = value;
-          await this.plugin.saveSettings();
-        }));
+      .setName("Default model")
+      .setDesc("Enter the default Replicate model to use for image generation")
+      .addText((text) =>
+        text
+          .setPlaceholder("prunaai/z-image-turbo-lora")
+          .setValue(this.plugin.settings.defaultModel)
+          .onChange(async (value) => {
+            this.plugin.settings.defaultModel = value;
+            await this.plugin.saveSettings();
+          })
+      );
 
     new Setting(containerEl)
-      .setName("lora weights url")
-      .setDesc("enter the huggingface url for the lora weights")
-      .addText(text => text
-        .setPlaceholder("https://huggingface.co/...")
-        .setValue(this.plugin.settings.loraWeights)
-        .onChange(async (value) => {
-          this.plugin.settings.loraWeights = value;
-          await this.plugin.saveSettings();
-        }));
+      .setName("LoRA weights URL")
+      .setDesc("Enter the HuggingFace URL for the LoRA weights")
+      .addText((text) =>
+        text
+          .setPlaceholder("https://huggingface.co/...")
+          .setValue(this.plugin.settings.loraWeights)
+          .onChange(async (value) => {
+            this.plugin.settings.loraWeights = value;
+            await this.plugin.saveSettings();
+          })
+      );
 
-    new Setting(containerEl)
-      .setHeading()
-      .setName("Prompt patterns");
+    new Setting(containerEl).setHeading().setName("Prompt patterns");
 
     new Setting(containerEl)
       .setName("Selected pattern")
       .setDesc("Choose which prompt pattern to use for image generation")
-      .addDropdown(dropdown => {
-        this.plugin.settings.promptPatterns.forEach(pattern => {
+      .addDropdown((dropdown) => {
+        this.plugin.settings.promptPatterns.forEach((pattern) => {
           dropdown.addOption(pattern.name, pattern.name);
         });
         dropdown.setValue(this.plugin.settings.selectedPattern);
@@ -364,13 +404,15 @@ class LazySketchSettingTab extends PluginSettingTab {
       new Setting(containerEl)
         .setName(`Pattern: ${pattern.name}`)
         .setDesc("Use {prompt} as a placeholder for your user input")
-        .addTextArea(text => text
-          .setPlaceholder("a style description with {prompt}")
-          .setValue(pattern.pattern)
-          .onChange(async (value) => {
-            this.plugin.settings.promptPatterns[index].pattern = value;
-            await this.plugin.saveSettings();
-          }));
+        .addTextArea((text) =>
+          text
+            .setPlaceholder("a style description with {prompt}")
+            .setValue(pattern.pattern)
+            .onChange(async (value) => {
+              this.plugin.settings.promptPatterns[index].pattern = value;
+              await this.plugin.saveSettings();
+            })
+        );
     });
   }
 }
