@@ -5,6 +5,15 @@ interface PromptPattern {
   pattern: string;
 }
 
+interface ReplicatePrediction {
+  error?: string;
+  status: string;
+  urls: {
+    get: string;
+  };
+  output?: string[];
+}
+
 interface LazySketchSettings {
   replicateApiToken: string;
   defaultModel: string;
@@ -42,7 +51,7 @@ export default class LazySketchPlugin extends Plugin {
 
     this.addCommand({
       id: "generate-sketch",
-      name: "Generate sketch.",
+      name: "Generate sketch",
       callback: () => this.generateSketch()
     });
 
@@ -51,13 +60,13 @@ export default class LazySketchPlugin extends Plugin {
 
   async generateSketch() {
     if (!this.settings.replicateApiToken) {
-      new Notice("Please set your Replicate API token in settings.");
+      new Notice("please set your replicate api token in settings");
       return;
     }
 
     const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
     if (!activeView) {
-      new Notice("Please open a markdown file first.");
+      new Notice("please open a markdown file first");
       return;
     }
 
@@ -228,7 +237,7 @@ export default class LazySketchPlugin extends Plugin {
         body: JSON.stringify(requestBody)
       });
 
-      const prediction = response.json;
+      const prediction = response.json as ReplicatePrediction;
 
       if (prediction.error) {
         throw new Error(prediction.error);
@@ -243,6 +252,7 @@ export default class LazySketchPlugin extends Plugin {
           throw new Error("Timeout: Polling took too long.");
         }
 
+        // eslint-disable-next-line no-undef
         await new Promise(resolve => setTimeout(resolve, 1000));
 
         const statusResponse = await requestUrl({
@@ -253,14 +263,14 @@ export default class LazySketchPlugin extends Plugin {
           }
         });
 
-        Object.assign(prediction, statusResponse.json);
+        Object.assign(prediction, statusResponse.json as ReplicatePrediction);
       }
 
       if (prediction.status === "failed") {
         throw new Error(prediction.error || "Generation failed.");
       }
 
-      return prediction.output[0];
+      return prediction.output ? prediction.output[0] : "";
     } catch (error) {
       if (error instanceof Error) {
         throw error;
@@ -270,7 +280,7 @@ export default class LazySketchPlugin extends Plugin {
   }
 
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData()) as LazySketchSettings;
   }
 
   async saveSettings() {
@@ -299,8 +309,8 @@ class LazySketchSettingTab extends PluginSettingTab {
       .setName("Lazy sketch settings");
 
     new Setting(containerEl)
-      .setName("Replicate API token")
-      .setDesc("Enter your Replicate API token. Get one at https://replicate.com/account/api-tokens.")
+      .setName("replicate api token")
+      .setDesc("enter your replicate api token. get one at https://replicate.com/account/api-tokens")
       .addText(text => text
         .setPlaceholder("r8_...")
         .setValue(this.plugin.settings.replicateApiToken)
@@ -310,8 +320,8 @@ class LazySketchSettingTab extends PluginSettingTab {
         }));
 
     new Setting(containerEl)
-      .setName("Default model")
-      .setDesc("Enter the default Replicate model to use for image generation.")
+      .setName("default model")
+      .setDesc("enter the default replicate model to use for image generation")
       .addText(text => text
         .setPlaceholder("prunaai/z-image-turbo-lora")
         .setValue(this.plugin.settings.defaultModel)
@@ -321,8 +331,8 @@ class LazySketchSettingTab extends PluginSettingTab {
         }));
 
     new Setting(containerEl)
-      .setName("LoRA weights URL")
-      .setDesc("Enter the huggingface URL for the LoRA weights.")
+      .setName("lora weights url")
+      .setDesc("enter the huggingface url for the lora weights")
       .addText(text => text
         .setPlaceholder("https://huggingface.co/...")
         .setValue(this.plugin.settings.loraWeights)
@@ -337,7 +347,7 @@ class LazySketchSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Selected pattern")
-      .setDesc("Choose which prompt pattern to use for image generation.")
+      .setDesc("Choose which prompt pattern to use for image generation")
       .addDropdown(dropdown => {
         this.plugin.settings.promptPatterns.forEach(pattern => {
           dropdown.addOption(pattern.name, pattern.name);
@@ -353,7 +363,7 @@ class LazySketchSettingTab extends PluginSettingTab {
     this.plugin.settings.promptPatterns.forEach((pattern, index) => {
       new Setting(containerEl)
         .setName(`Pattern: ${pattern.name}`)
-        .setDesc("Use {prompt} as a placeholder for your user input.")
+        .setDesc("Use {prompt} as a placeholder for your user input")
         .addTextArea(text => text
           .setPlaceholder("a style description with {prompt}")
           .setValue(pattern.pattern)
