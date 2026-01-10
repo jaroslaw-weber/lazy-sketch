@@ -285,7 +285,6 @@ export default class LazySketchPlugin extends Plugin {
           throw new Error("Timeout: Polling took too long.");
         }
 
-        // eslint-disable-next-line no-undef
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
         const statusResponse = await requestUrl({

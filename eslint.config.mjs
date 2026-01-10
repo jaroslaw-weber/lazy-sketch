@@ -12,6 +12,12 @@ export default defineConfig([
 		languageOptions: {
 			parser: tsparser,
 			parserOptions: { project: "./tsconfig.json" },
+			globals: {
+				setTimeout: "readonly",
+				setInterval: "readonly",
+				clearTimeout: "readonly",
+				clearInterval: "readonly",
+			},
 		},
 		// optional: if you want to be extra explicit
 		// ignores: [],
