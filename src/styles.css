@@ -30,3 +30,27 @@
   color: var(--text-muted);
   margin-top: 10px;
 }
+
+.ls-progress-container {
+  width: 100%;
+  height: 20px;
+  background-color: var(--background-modifier-border);
+  border-radius: 10px;
+  margin: 20px 0;
+  overflow: hidden;
+}
+
+.ls-progress-bar {
+  height: 100%;
+  width: var(--ls-progress-width, 0%);
+  background-color: var(--interactive-accent);
+  border-radius: 10px;
+  transition: width 0.1s linear;
+}
+
+.ls-estimated-time {
+  text-align: center;
+  color: var(--text-normal);
+  margin-top: 5px;
+  font-size: 0.9em;
+}

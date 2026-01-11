@@ -1,5 +1,4 @@
 import {
-  App,
   Plugin,
   Notice,
   MarkdownView,
@@ -31,7 +30,13 @@ export default class LazySketchPlugin extends Plugin {
     this.addCommand({
       id: "generate-sketch-ultra-wide",
       name: "Generate sketch (ultra-wide / 8:1)",
-      callback: () => this.generateSketch(1536, 192),
+      callback: () => this.generateSketch(2048, 256),
+    });
+
+    this.addCommand({
+      id: "generate-sketch-custom",
+      name: "Generate sketch (custom)",
+      callback: () => this.generateSketch(this.settings.customWidth, this.settings.customHeight),
     });
 
     this.addSettingTab(new LazySketchSettingTab(this.app, this));
@@ -56,16 +61,21 @@ export default class LazySketchPlugin extends Plugin {
     const prompt = selection || (await this.promptForPrompt());
     if (!prompt) return;
 
-    const loadingModal = new LoadingModal(this.app);
+    const estimatedTimeMs = this.settings.lastGenerationTimeMs || 5000;
+    const loadingModal = new LoadingModal(this.app, estimatedTimeMs);
     loadingModal.open();
 
     try {
+      const generationStartTime = Date.now();
       const imageUrl = await callReplicateAPI(
         prompt,
         this.settings,
         width,
         height
       );
+      const actualGenerationTimeMs = Date.now() - generationStartTime;
+      this.settings.lastGenerationTimeMs = actualGenerationTimeMs;
+      await this.saveSettings();
 
       const imagePath = await downloadAndSaveImage(this.app, imageUrl, prompt);
 

@@ -18,6 +18,9 @@ export interface LazySketchSettings {
   loraWeights: string;
   selectedPattern: string;
   promptPatterns: PromptPattern[];
+  customWidth: number;
+  customHeight: number;
+  lastGenerationTimeMs: number;
 }
 
 export const DEFAULT_SETTINGS: LazySketchSettings = {
@@ -44,4 +47,7 @@ export const DEFAULT_SETTINGS: LazySketchSettings = {
         "a playful pencil sketch. white background. whimsical & imaginative. {prompt}",
     },
   ],
+  customWidth: 1024,
+  customHeight: 512,
+  lastGenerationTimeMs: 5000,
 };

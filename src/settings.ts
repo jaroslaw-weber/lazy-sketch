@@ -54,6 +54,40 @@ export class LazySketchSettingTab extends PluginSettingTab {
           })
       );
 
+    new Setting(containerEl).setHeading().setName("Custom dimensions");
+
+    new Setting(containerEl)
+      .setName("Custom width")
+      .setDesc("Default width for custom sketch generation (default: 1024)")
+      .addText((text) =>
+        text
+          .setPlaceholder("1024")
+          .setValue(this.plugin.settings.customWidth.toString())
+          .onChange(async (value) => {
+            const width = parseInt(value);
+            if (!isNaN(width) && width > 0) {
+              this.plugin.settings.customWidth = width;
+              await this.plugin.saveSettings();
+            }
+          })
+      );
+
+    new Setting(containerEl)
+      .setName("Custom height")
+      .setDesc("Default height for custom sketch generation (default: 512)")
+      .addText((text) =>
+        text
+          .setPlaceholder("512")
+          .setValue(this.plugin.settings.customHeight.toString())
+          .onChange(async (value) => {
+            const height = parseInt(value);
+            if (!isNaN(height) && height > 0) {
+              this.plugin.settings.customHeight = height;
+              await this.plugin.saveSettings();
+            }
+          })
+      );
+
     new Setting(containerEl).setHeading().setName("Prompt patterns");
 
     new Setting(containerEl)
